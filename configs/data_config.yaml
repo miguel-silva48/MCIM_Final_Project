@@ -1,0 +1,40 @@
+# Data Configuration for Medical Image Captioning Project
+
+# Projection strategy for training
+# Options: 'first_frontal', 'paired', 'all'
+# - first_frontal: Use only the first frontal image per patient (recommended for patient-level splitting)
+# - paired: Use only patients with exactly 1 frontal + 1 lateral image
+# - all: Use all images (may cause data leakage if same patient in train/val)
+projection_strategy: 'first_frontal'
+
+# Text source for caption generation
+# Options: 'findings', 'impression', 'both'
+# - findings: Detailed observations from the radiologist
+# - impression: Concise clinical conclusion (recommended as target)
+# - both: Concatenate findings and impression
+text_source: 'impression'
+
+# Maximum allowed ratio of censored tokens (XXXX) in reports
+# Reports with higher censoring will be filtered out
+# Range: 0.0 to 1.0 (e.g., 0.3 = 30% XXXX tokens allowed)
+max_censoring_ratio: 0.3
+
+# Minimum frequency for a token to be included in vocabulary
+# Lower values = larger vocabulary, higher values = smaller vocabulary
+# Recommended values: 3-5 for medical domain
+min_vocab_freq: 5
+
+# Text preprocessing options
+text_preprocessing:
+  lowercase: true
+  remove_punctuation: true   # Remove punctuation for cleaner n-grams and vocabulary
+  clean_metadata: true       # Remove age, exam type, etc.
+
+# Data splits (percentages)
+splits:
+  train: 0.80
+  val: 0.10
+  test: 0.10
+
+# Random seed for reproducibility
+random_seed: 42

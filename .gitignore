@@ -1,3 +1,15 @@
+#######################################################################
+## Rules (made for MCIM's Final Project on Medical Image Captioning) ##
+#######################################################################
+
+# Ignore dataset and its image files (around 14GB)
+data/*.zip
+data/images/
+
+#######################################################################
+## Rules for Python projects (made with GitHub's gitignore template) ##
+#######################################################################
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]

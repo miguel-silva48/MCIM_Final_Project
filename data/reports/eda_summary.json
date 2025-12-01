@@ -1,0 +1,37 @@
+{
+  "dataset_stats": {
+    "total_patients": 3851,
+    "total_images": 7466,
+    "total_reports": 3851,
+    "ideal_pairs": 3194,
+    "frontal_only": 301
+  },
+  "text_stats": {
+    "reports_before_filtering": 3851,
+    "reports_after_filtering": 3848,
+    "avg_impression_length_words": 10.567461357086717,
+    "avg_findings_length_words": 31.455308938212358
+  },
+  "vocabulary_stats": {
+    "vocab_size": 586,
+    "min_freq": 5,
+    "total_unique_tokens": 1499
+  },
+  "config": {
+    "projection_strategy": "first_frontal",
+    "text_source": "impression",
+    "max_censoring_ratio": 0.3,
+    "min_vocab_freq": 5,
+    "text_preprocessing": {
+      "lowercase": true,
+      "remove_punctuation": true,
+      "clean_metadata": true
+    },
+    "splits": {
+      "train": 0.8,
+      "val": 0.1,
+      "test": 0.1
+    },
+    "random_seed": 42
+  }
+}
