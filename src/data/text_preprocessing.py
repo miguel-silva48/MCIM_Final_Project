@@ -52,7 +52,7 @@ def extract_report_text(
 
 def calculate_censoring_ratio(text: str) -> float:
     """
-    Calculate the ratio of censored tokens (XXXX) to total words.
+    Calculate the ratio of censored tokens (XXXX/xxxx) to total words.
     
     Args:
         text: Report text
@@ -63,15 +63,58 @@ def calculate_censoring_ratio(text: str) -> float:
     if not text or pd.isna(text):
         return 0.0
     
+    text_str = str(text)
+    
     # Split on whitespace and punctuation
-    tokens = re.findall(r'\b\w+\b', str(text))
+    tokens = re.findall(r'\b\w+\b', text_str)
     
     if len(tokens) == 0:
         return 0.0
     
-    xxxx_count = sum(1 for token in tokens if token == 'XXXX')
+    # Count both uppercase and lowercase xxxx
+    xxxx_count = sum(1 for token in tokens if token.upper() == 'XXXX')
     
     return xxxx_count / len(tokens)
+
+
+def remove_censoring_tokens(text: str) -> str:
+    """
+    Remove censoring tokens (XXXX, x-XXXX, standalone x) from text while preserving other content.
+    
+    Removes:
+    - XXXX (4 X's in a row)
+    - x-XXXX patterns (e.g., "chest x-XXXX")
+    - Standalone x (not part of words like "exposure" or "x-ray")
+    
+    Args:
+        text: Report text
+        
+    Returns:
+        Text with censoring tokens removed
+    """
+    if not text or pd.isna(text):
+        return ""
+    
+    text_str = str(text)
+    
+    # Pattern 1: Remove x-XXXX pattern (e.g., "chest x-XXXX")
+    cleaned = re.sub(r'\bx-x{4}\b', '', text_str, flags=re.IGNORECASE)
+    
+    # Pattern 2: Remove standalone XXXX (4 X's)
+    cleaned = re.sub(r'\bx{4}\b', '', cleaned, flags=re.IGNORECASE)
+    
+    # Pattern 3: Remove standalone x (not followed by hyphen to preserve "x-ray")
+    # This catches censoring x's but preserves "x-ray", "x-axis", etc.
+    cleaned = re.sub(r'\bx\b(?!-)', '', cleaned, flags=re.IGNORECASE)
+    
+    # Clean up multiple spaces and extra punctuation
+    cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+    
+    # Clean up any double periods or trailing punctuation issues
+    cleaned = re.sub(r'\.+', '.', cleaned)
+    cleaned = re.sub(r'\s+([.,;:])', r'\1', cleaned)
+    
+    return cleaned
 
 
 def filter_reports_by_censoring(

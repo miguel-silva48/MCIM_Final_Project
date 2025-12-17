@@ -1,0 +1,66 @@
+{
+  "eda_metadata": {
+    "notebook": "01_eda.ipynb",
+    "purpose": "Exploratory Data Analysis - Full dataset exploration",
+    "date_generated": "2025-12-17T14:06:19.511340"
+  },
+  "dataset_stats": {
+    "total_patients": 3851,
+    "total_images": 7466,
+    "total_reports": 3851,
+    "ideal_pairs": 3194,
+    "frontal_only": 301,
+    "multiple_frontals": 122
+  },
+  "text_stats": {
+    "reports_before_censoring_filter": 3851,
+    "reports_after_censoring_filter": 3848,
+    "reports_removed": 3,
+    "avg_impression_length_words": 10.567461357086717,
+    "avg_findings_length_words": 31.455308938212358,
+    "median_impression_censoring": 0.0,
+    "median_findings_censoring": 0.0
+  },
+  "n_gram_stats": {
+    "unique_unigrams": 1497,
+    "unique_bigrams": 9187,
+    "unique_trigrams": 15316,
+    "top_unigram": [
+      [
+        "no"
+      ],
+      3121
+    ],
+    "top_bigram": "no acute",
+    "top_trigram": "no acute cardiopulmonary"
+  },
+  "config_used": {
+    "projection_strategy": "first_frontal",
+    "text_source": "impression",
+    "max_censoring_ratio": 0.3,
+    "min_vocab_freq": 5,
+    "text_preprocessing": {
+      "lowercase": true,
+      "remove_punctuation": true,
+      "clean_metadata": true
+    },
+    "splits": {
+      "train": 0.8,
+      "val": 0.1,
+      "test": 0.1,
+      "strategy": "patient_level"
+    },
+    "output_paths": {
+      "eda_reports": "data/reports/eda",
+      "processed_data": "data/processed",
+      "vocabulary": "data/processed/vocabulary.txt",
+      "manifest": "data/processed/preprocessing_manifest.json"
+    },
+    "random_seed": 42
+  },
+  "warnings": [
+    "This is exploratory analysis on the FULL dataset",
+    "Vocabulary has NOT been built yet - will be done in preprocessing on training data only",
+    "No data splitting performed - this is for exploration only"
+  ]
+}

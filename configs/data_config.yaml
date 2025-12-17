@@ -35,6 +35,14 @@ splits:
   train: 0.80
   val: 0.10
   test: 0.10
+  strategy: 'patient_level'  # Split by patient uid to prevent data leakage
+
+# Output directories
+output_paths:
+  eda_reports: 'data/reports/eda'           # EDA visualizations and analysis
+  processed_data: 'data/processed'          # Train/val/test splits
+  vocabulary: 'data/processed/vocabulary.txt'
+  manifest: 'data/processed/preprocessing_manifest.json'
 
 # Random seed for reproducibility
 random_seed: 42

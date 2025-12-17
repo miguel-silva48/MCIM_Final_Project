@@ -165,6 +165,7 @@ def plot_text_length_distributions(
 
 def plot_censoring_distribution(
     censoring_ratios: pd.Series,
+    max_threshold: float = 0.3,
     save_path: Optional[Path] = None
 ) -> None:
     """
@@ -172,15 +173,28 @@ def plot_censoring_distribution(
     
     Args:
         censoring_ratios: Series of censoring ratios (0.0 to 1.0)
+        max_threshold: Maximum censoring threshold to display as vertical line
         save_path: Optional path to save figure
     """
     fig, ax = plt.subplots(figsize=(10, 6))
     
-    ax.hist(censoring_ratios, bins=50, edgecolor='black', alpha=0.7, color='darkred')
+    # Create histogram with bins covering full range 0-1 (0%-100%)
+    ax.hist(censoring_ratios, bins=50, range=(0, 1), edgecolor='black', alpha=0.7, color='darkred')
     ax.set_xlabel('Censoring Ratio (proportion of XXXX tokens)')
     ax.set_ylabel('Number of Reports')
     ax.set_title(f'Distribution of Report Censoring\n(Mean: {censoring_ratios.mean():.3f}, Median: {censoring_ratios.median():.3f})')
-    ax.axvline(0.3, color='orange', linestyle='--', linewidth=2, label='30% threshold')
+    
+    # Show threshold line
+    ax.axvline(max_threshold, color='orange', linestyle='--', linewidth=2, 
+               label=f'{int(max_threshold*100)}% threshold')
+    
+    # Set x-axis to always show 0-100% range
+    ax.set_xlim(0, 1.0)
+    
+    # Add percentage labels on x-axis
+    ax.set_xticks([0, 0.2, 0.4, 0.6, 0.8, 1.0])
+    ax.set_xticklabels(['0%', '20%', '40%', '60%', '80%', '100%'])
+    
     ax.legend()
     ax.grid(axis='y', alpha=0.3)
     
