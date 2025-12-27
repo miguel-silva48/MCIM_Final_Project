@@ -1,5 +1,6 @@
 """Data loading, preprocessing, and analysis modules."""
 
+# Preprocessing and analysis functions
 from .data_loader import (
     load_raw_data,
     merge_projections_reports,
@@ -27,7 +28,14 @@ from .preprocessing import (
     preprocess_dataset
 )
 
+# Training data pipeline
+from .vocabulary import Vocabulary
+from .transforms import get_transforms
+from .dataset import ChestXrayDataset
+from .collate import collate_fn
+
 __all__ = [
+    # Preprocessing
     'load_raw_data',
     'merge_projections_reports',
     'analyze_patient_image_counts',
@@ -45,5 +53,10 @@ __all__ = [
     'save_ngram_report',
     'apply_first_frontal_strategy',
     'split_data_by_patient',
-    'preprocess_dataset'
+    'preprocess_dataset',
+    # Training pipeline
+    'Vocabulary',
+    'get_transforms',
+    'ChestXrayDataset',
+    'collate_fn'
 ]
