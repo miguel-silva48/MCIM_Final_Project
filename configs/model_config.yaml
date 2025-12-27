@@ -1,0 +1,175 @@
+# =============================================================================
+# Medical Image Captioning - Model & Training Configuration
+# =============================================================================
+# Hardware suggestions:
+#   - GTX 1650Ti 4GB: batch_size=4-8, gradient_accumulation_steps=4-8
+#   - M2 Mac 8GB: batch_size=8-16, mixed_precision=false
+#   - RX 9070XT/P100/T4 16GB: batch_size=32-64, full config
+# =============================================================================
+
+# Model Architecture Configuration
+model:
+  encoder:
+    architecture: "densenet121"  # DenseNet-121 pretrained on ImageNet
+    pretrained: true
+    freeze_backbone: true  # Start with frozen encoder, fine-tune later if needed
+    freeze_until_layer: null  # Options: null (freeze all), "denseblock3", "denseblock4"
+    feature_extraction_layer: "features"  # Extract before classification head
+    output_feature_dim: 1024  # DenseNet-121 feature dimension
+  
+  decoder:
+    type: "lstm"  # LSTM with attention
+    embedding_dim: 512
+    hidden_dim: 1024
+    num_layers: 1
+    dropout: 0.5
+    vocab_size: null  # Auto-filled from vocabulary file
+    
+    attention:
+      type: "bahdanau"  # Additive attention (simpler, proven)
+      attention_dim: 512
+      visualize_attention: true  # Save attention maps during inference
+
+# Data Configuration
+data:
+  # Image preprocessing
+  image_size: 224  # DenseNet standard input size
+  normalize:
+    mean: [0.485, 0.456, 0.406]  # ImageNet normalization
+    std: [0.229, 0.224, 0.225]
+  
+  # Data augmentation (training only)
+  augmentation:
+    enabled: true
+    random_rotation_degrees: 5
+    random_horizontal_flip: 0.5
+    color_jitter:
+      brightness: 0.1
+      contrast: 0.1
+  
+  # Text preprocessing
+  max_caption_length: 50  # Maximum tokens in caption (including <START>, <END>)
+  
+  # DataLoader settings
+  num_workers: 4  # CPU threads for data loading (adjust based on system)
+  pin_memory: true  # Faster data transfer to GPU (disable on MPS/CPU)
+
+# Training Configuration
+training:
+  # Basic settings
+  num_epochs: 30
+  batch_size: 32  # Will auto-adjust based on available GPU memory
+  gradient_accumulation_steps: 1  # Auto-adjusted if batch_size reduced
+  
+  # Optimization
+  optimizer:
+    type: "adam"
+    learning_rate: 1e-4
+    weight_decay: 1e-5
+    betas: [0.9, 0.999]
+  
+  gradient_clip_norm: 5.0  # Clip gradients to prevent explosion
+  
+  # Learning rate scheduler
+  scheduler:
+    type: "reduce_on_plateau"  # Reduce LR when validation metric plateaus
+    mode: "min"  # Minimize validation loss
+    patience: 3  # Epochs to wait before reducing LR
+    factor: 0.5  # Multiply LR by this factor
+    min_lr: 1e-6  # Minimum learning rate
+  
+  # Teacher forcing (use ground truth during training)
+  teacher_forcing_ratio: 1.0  # 1.0 = always use ground truth
+  
+  # Scheduled sampling (optional - commented out for now)
+  # scheduled_sampling:
+  #   enabled: false
+  #   start_epoch: 10  # Start reducing teacher forcing after this epoch
+  #   decay_rate: 0.95  # Multiply teacher_forcing_ratio by this each epoch
+  
+  # Checkpointing
+  checkpoint:
+    save_dir: "outputs/training_runs"
+    save_frequency: 1  # Save every N epochs
+    save_best_only: false  # Keep both best and last checkpoints
+    metric_for_best: "val_loss"  # Metric to determine best model
+  
+  # Early stopping
+  early_stopping:
+    enabled: true
+    patience: 10  # Stop if no improvement for N epochs
+    metric: "val_loss"
+    mode: "min"
+  
+  # Validation
+  val_frequency: 1  # Run validation every N epochs
+  num_val_samples_to_generate: 10  # Generate captions for N validation images
+  
+  # Mixed precision training (FP16)
+  mixed_precision: true  # Auto-disabled on MPS/CPU
+
+# Inference Configuration
+inference:
+  decoding:
+    method: "beam_search"  # Options: "beam_search", "greedy"
+    beam_size: 3  # Number of beams (3-5 is usually good)
+    max_length: 50  # Maximum caption length
+    length_penalty: 0.0  # Penalize longer captions (0.0 = no penalty)
+    repetition_penalty: 1.0  # Penalize repeated words (1.0 = no penalty)
+  
+  # Sample generation during training
+  sample_temperature: 1.0  # Sampling temperature (1.0 = standard, <1.0 = more confident)
+
+# Device Configuration
+device:
+  auto_detect: true  # Automatically select best available device
+  force_device: null  # Override auto-detection: "cuda", "mps", "cpu", or null
+  
+  # Memory management
+  empty_cache_frequency: 5  # Clear GPU cache every N batches
+  gradient_checkpointing: false  # Trade compute for memory (enable for 4GB GPU)
+  
+  # Auto-adjust batch size based on GPU memory
+  auto_adjust_batch_size: true
+  target_memory_gb: null  # null = auto-detect, or specify target (e.g., 4, 8, 16)
+  batch_size_memory_ratio:
+    base_memory: 16  # Base config assumes 16GB
+    base_batch_size: 32  # Base batch size for 16GB
+
+# Logging Configuration
+logging:
+  # Run naming
+  run_name: null  # Auto-generated if null: "{variant}_{timestamp}"
+  
+  # Metrics to track
+  track_metrics: ["bleu1", "bleu2", "bleu3", "bleu4", "meteor", "rouge_l", "cider"]
+  
+  # Save frequency
+  log_frequency: 10  # Log every N batches
+  
+  # Visualization
+  save_attention_maps: true  # Save attention visualizations
+  save_sample_predictions: true  # Save generated captions during validation
+  
+  # Export formats
+  export_manifest: true  # Generate training_manifest.json
+  export_metrics_csv: true  # Save metrics to CSV files
+
+# Paths Configuration
+paths:
+  # Data paths (relative to project root)
+  data_dir: "data"
+  processed_dir: "data/processed"
+  preprocessing_variant: "first_frontal_impression"  # Which preprocessing variant to use
+  
+  # Vocabulary file (auto-constructed from preprocessing_variant)
+  vocabulary_file: null  # Auto: "{processed_dir}/{preprocessing_variant}/vocabulary.txt"
+  
+  # Image directory
+  images_dir: "data/images/images_normalized"
+  
+  # Output directory
+  output_dir: "outputs/training_runs"
+
+# Random seed for reproducibility
+random_seed: 42
