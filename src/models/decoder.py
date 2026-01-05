@@ -202,17 +202,21 @@ class CaptionDecoder(nn.Module):
         
         # Initialize hidden state
         h, c = self.init_hidden_state(encoder_out)
-        
-        # We won't decode at the <END> position, so -1
-        decode_lengths = (caption_lengths - 1).tolist()
-        max_decode_length = max(decode_lengths)
-        
+
+        # Decode for the length of targets
+        # Input captions: [START, w1, ..., w(N-1)] has max_length tokens
+        # We predict: [w1, ..., w(N-1), END] - same as input but shifted left and with END
+        # Target will be sorted_captions[:, 1:] which has max_length - 1 tokens
+        # So we need max_length - 1 predictions to match
+        decode_length = max_length - 1
+        decode_lengths = caption_lengths.tolist()  # Actual lengths (already excludes END)
+
         # Create tensors to hold predictions and attention weights
-        predictions = torch.zeros(batch_size, max_decode_length, self.vocab_size).to(encoder_out.device)
-        alphas = torch.zeros(batch_size, max_decode_length, encoder_out.size(1)).to(encoder_out.device)
-        
+        predictions = torch.zeros(batch_size, decode_length, self.vocab_size).to(encoder_out.device)
+        alphas = torch.zeros(batch_size, decode_length, encoder_out.size(1)).to(encoder_out.device)
+
         # Teacher forcing: feed ground truth at each step
-        for t in range(max_decode_length):
+        for t in range(decode_length):
             # Only process sequences that haven't finished yet
             batch_size_t = sum([l > t for l in decode_lengths])
             

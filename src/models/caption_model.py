@@ -122,7 +122,7 @@ class EncoderDecoderModel(nn.Module):
         # [batch, encoder_dim, H, W] -> [batch, H*W, encoder_dim]
         batch_size = encoder_out.size(0)
         encoder_dim = encoder_out.size(1)
-        encoder_out = encoder_out.view(batch_size, encoder_dim, -1)  # [batch, encoder_dim, H*W]
+        encoder_out = encoder_out.reshape(batch_size, encoder_dim, -1)  # [batch, encoder_dim, H*W]
         encoder_out = encoder_out.permute(0, 2, 1)  # [batch, H*W, encoder_dim]
         
         # Decode captions
@@ -163,7 +163,7 @@ class EncoderDecoderModel(nn.Module):
             # Reshape for decoder
             batch_size = encoder_out.size(0)
             encoder_dim = encoder_out.size(1)
-            encoder_out = encoder_out.view(batch_size, encoder_dim, -1)
+            encoder_out = encoder_out.reshape(batch_size, encoder_dim, -1)
             encoder_out = encoder_out.permute(0, 2, 1)  # [1, num_pixels, encoder_dim]
             
             if beam_size == 1:
@@ -290,7 +290,7 @@ class EncoderDecoderModel(nn.Module):
                 top_scores, top_words = scores[0].topk(k, dim=0, largest=True, sorted=True)
             else:
                 # Find top k scores across all beams
-                top_scores, top_words = scores.view(-1).topk(k, dim=0, largest=True, sorted=True)
+                top_scores, top_words = scores.reshape(-1).topk(k, dim=0, largest=True, sorted=True)
             
             # Convert to vocabulary indices
             prev_word_inds = top_words // vocab_size  # Which beam

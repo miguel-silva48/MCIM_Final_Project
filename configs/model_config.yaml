@@ -64,8 +64,8 @@ training:
   # Optimization
   optimizer:
     type: "adam"
-    learning_rate: 1e-4
-    weight_decay: 1e-5
+    learning_rate: 0.0001  # 1e-4
+    weight_decay: 0.00001  # 1e-5
     betas: [0.9, 0.999]
   
   gradient_clip_norm: 5.0  # Clip gradients to prevent explosion
@@ -76,7 +76,7 @@ training:
     mode: "min"  # Minimize validation loss
     patience: 3  # Epochs to wait before reducing LR
     factor: 0.5  # Multiply LR by this factor
-    min_lr: 1e-6  # Minimum learning rate
+    min_lr: 0.000001  # Minimum learning rate (1e-6)
   
   # Teacher forcing (use ground truth during training)
   teacher_forcing_ratio: 1.0  # 1.0 = always use ground truth

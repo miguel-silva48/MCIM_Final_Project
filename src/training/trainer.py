@@ -244,16 +244,18 @@ class CaptionTrainer:
             
             # Forward pass with mixed precision
             with autocast(enabled=self.use_amp):
-                # Model outputs: (batch_size, seq_len-1, vocab_size)
+                # Model outputs: (predictions, attention_weights, sorted_captions, sorted_lengths)
                 # Teacher forcing: use ground truth tokens as decoder input
-                predictions = self.model(images, captions[:, :-1], caption_lengths - 1)
-                
-                # Calculate loss
-                # targets: captions[:, 1:] (skip <START>, include <END>)
-                loss = self.criterion(predictions, captions[:, 1:])
-                
-                # Calculate perplexity
-                perplexity = self.perplexity_fn(predictions, captions[:, 1:])
+                predictions, attention_weights, sorted_captions, sorted_lengths = self.model(
+                    images, captions[:, :-1], caption_lengths - 1
+                )
+
+                # Calculate loss (use sorted_captions from model output)
+                # targets: sorted_captions[:, 1:] (skip <START>, include <END>)
+                loss = self.criterion(predictions, sorted_captions[:, 1:])
+
+                # Calculate perplexity (use sorted_captions from model output)
+                perplexity = self.perplexity_fn(predictions, sorted_captions[:, 1:])
             
             # Backward pass
             self.optimizer.zero_grad()
@@ -316,19 +318,25 @@ class CaptionTrainer:
             captions = captions.to(self.device)
             
             # Calculate loss (teacher forcing)
-            predictions = self.model(images, captions[:, :-1], caption_lengths - 1)
-            loss = self.criterion(predictions, captions[:, 1:])
+            predictions, attention_weights, sorted_captions, sorted_lengths = self.model(
+                images, captions[:, :-1], caption_lengths - 1
+            )
+            loss = self.criterion(predictions, sorted_captions[:, 1:])
             total_loss += loss.item()
             num_batches += 1
-            
+
             # Generate captions (beam search)
             for i in range(len(images)):
+                # Determine beam_size based on decoding method
+                method = self.config['inference']['decoding']['method']
+                beam_size = 1 if method == 'greedy' else self.config['inference']['decoding']['beam_size']
+
                 # Generate caption
                 generated_ids, _ = self.model.generate_caption(
                     images[i:i+1],
                     max_length=self.config['inference']['decoding']['max_length'],
-                    method=self.config['inference']['decoding']['method'],
-                    beam_size=self.config['inference']['decoding']['beam_size']
+                    beam_size=beam_size,
+                    length_penalty=self.config['inference']['decoding'].get('length_penalty', 0.0)
                 )
                 
                 # Decode reference
