@@ -6,6 +6,9 @@
 data/*.zip
 data/images/
 
+# Model files
+*.pt
+
 #######################################################################
 ## Rules for Python projects (made with GitHub's gitignore template) ##
 #######################################################################

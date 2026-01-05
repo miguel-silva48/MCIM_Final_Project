@@ -244,16 +244,23 @@ class CaptionTrainer:
             
             # Forward pass with mixed precision
             with autocast(enabled=self.use_amp):
-                # Model outputs: (batch_size, seq_len-1, vocab_size)
+                # Model outputs: predictions, attention_weights, sorted_captions, sorted_lengths
                 # Teacher forcing: use ground truth tokens as decoder input
-                predictions = self.model(images, captions[:, :-1], caption_lengths - 1)
+                predictions, attention_weights, sorted_captions, sorted_lengths = self.model(
+                    images, captions[:, :-1], caption_lengths - 1
+                )
                 
                 # Calculate loss
-                # targets: captions[:, 1:] (skip <START>, include <END>)
-                loss = self.criterion(predictions, captions[:, 1:])
+                # Decoder returns predictions for actual max length (not padded max)
+                # Truncate targets to match predictions length
+                # predictions shape: [batch_size, actual_max_len, vocab_size]
+                # targets shape: [batch_size, actual_max_len]
+                seq_len = predictions.size(1)
+                targets = sorted_captions[:, 1:1+seq_len]  # Skip <START>, match predictions length
+                loss = self.criterion(predictions, targets)
                 
                 # Calculate perplexity
-                perplexity = self.perplexity_fn(predictions, captions[:, 1:])
+                perplexity = self.perplexity_fn(predictions, targets)
             
             # Backward pass
             self.optimizer.zero_grad()
@@ -314,20 +321,27 @@ class CaptionTrainer:
         for batch_idx, (images, captions, caption_lengths, image_paths, uids) in enumerate(progress_bar):
             images = images.to(self.device)
             captions = captions.to(self.device)
+            caption_lengths = caption_lengths.to(self.device)
             
             # Calculate loss (teacher forcing)
-            predictions = self.model(images, captions[:, :-1], caption_lengths - 1)
-            loss = self.criterion(predictions, captions[:, 1:])
+            # Model returns: predictions, attention_weights, sorted_captions, sorted_lengths
+            predictions, attention_weights, sorted_captions, sorted_lengths = self.model(
+                images, captions[:, :-1], caption_lengths - 1
+            )
+            # Truncate targets to match predictions length
+            seq_len = predictions.size(1)
+            targets = sorted_captions[:, 1:1+seq_len]
+            loss = self.criterion(predictions, targets)
             total_loss += loss.item()
             num_batches += 1
             
             # Generate captions (beam search)
             for i in range(len(images)):
                 # Generate caption
+                # Note: method is implicit - beam_size=1 for greedy, >1 for beam search
                 generated_ids, _ = self.model.generate_caption(
                     images[i:i+1],
                     max_length=self.config['inference']['decoding']['max_length'],
-                    method=self.config['inference']['decoding']['method'],
                     beam_size=self.config['inference']['decoding']['beam_size']
                 )
                 
@@ -341,9 +355,10 @@ class CaptionTrainer:
                     reference_tokens = reference_tokens[:reference_tokens.index(self.vocabulary.END_TOKEN)]
                 
                 # Decode hypothesis
+                # generated_ids is already a list of ints, not nested
                 hypothesis_tokens = [
                     self.vocabulary.idx_to_token.get(idx, '<UNK>')
-                    for idx in generated_ids[0]
+                    for idx in generated_ids
                     if idx not in [self.vocabulary.PAD_IDX, self.vocabulary.START_IDX]
                 ]
                 if self.vocabulary.END_TOKEN in hypothesis_tokens:

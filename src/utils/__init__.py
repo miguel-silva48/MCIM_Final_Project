@@ -3,6 +3,7 @@
 from .environment import is_kaggle, is_local, get_execution_env
 from .data_paths import get_data_paths
 from .device_check import get_device, get_device_info, print_device_info
+from .config_loader import load_config
 from .checkpoint import CheckpointManager
 from .logging_utils import TrainingLogger, MetricsTracker
 
@@ -14,6 +15,7 @@ __all__ = [
     'get_device',
     'get_device_info',
     'print_device_info',
+    'load_config',
     'CheckpointManager',
     'TrainingLogger',
     'MetricsTracker'

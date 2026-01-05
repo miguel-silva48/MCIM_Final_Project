@@ -63,8 +63,8 @@ class CaptionLoss(nn.Module):
         # predictions: (batch_size * seq_len, vocab_size)
         # targets: (batch_size * seq_len)
         batch_size, seq_len, vocab_size = predictions.shape
-        predictions = predictions.view(-1, vocab_size)
-        targets = targets.view(-1)
+        predictions = predictions.contiguous().view(-1, vocab_size)
+        targets = targets.contiguous().view(-1)
         
         # Calculate loss
         loss = self.criterion(predictions, targets)
@@ -116,8 +116,8 @@ class PerplexityLoss(nn.Module):
         """
         # Calculate cross-entropy loss
         batch_size, seq_len, vocab_size = predictions.shape
-        predictions = predictions.view(-1, vocab_size)
-        targets = targets.view(-1)
+        predictions = predictions.contiguous().view(-1, vocab_size)
+        targets = targets.contiguous().view(-1)
         
         loss = self.criterion(predictions, targets)
         

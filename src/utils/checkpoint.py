@@ -122,8 +122,8 @@ class CheckpointManager:
         if not os.path.exists(checkpoint_path):
             raise FileNotFoundError(f"Checkpoint not found: {checkpoint_path}")
         
-        # Load checkpoint
-        checkpoint = torch.load(checkpoint_path, map_location=device)
+        # Load checkpoint (weights_only=False for pytorch 2.6+ compatibility)
+        checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
         
         # Load model state
         model.load_state_dict(checkpoint['model_state_dict'])
