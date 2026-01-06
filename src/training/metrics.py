@@ -35,9 +35,12 @@ except ImportError:
 
 try:
     from rouge_score import rouge_scorer
+    ROUGE_AVAILABLE = True
 except ImportError:
     print("Warning: rouge-score not installed. ROUGE-L will not be available.")
     print("Install with: pip install rouge-score")
+    ROUGE_AVAILABLE = False
+    rouge_scorer = None
 
 
 class CaptionMetrics:
@@ -50,7 +53,10 @@ class CaptionMetrics:
     def __init__(self):
         """Initialize metrics calculator."""
         self.smoothing = SmoothingFunction()
-        self.rouge_scorer = rouge_scorer.RougeScorer(['rougeL'], use_stemmer=True)
+        if ROUGE_AVAILABLE:
+            self.rouge_scorer = rouge_scorer.RougeScorer(['rougeL'], use_stemmer=True)
+        else:
+            self.rouge_scorer = None
     
     def compute_bleu(
         self,
@@ -159,6 +165,10 @@ class CaptionMetrics:
         Returns:
             ROUGE-L F1 score (0-1, higher is better)
         """
+        if not ROUGE_AVAILABLE or self.rouge_scorer is None:
+            print("Warning: ROUGE-L not available, returning 0.0")
+            return 0.0
+            
         rouge_scores = []
         
         for refs, hyp in zip(references, hypotheses):
