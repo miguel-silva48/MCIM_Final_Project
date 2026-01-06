@@ -10,7 +10,8 @@ from .environment import is_kaggle
 def get_data_paths(
     preprocessing_variant: str = 'first_frontal_impression',
     project_root: Optional[Path] = None,
-    kaggle_dataset_name: str = 'chest-xrays-indiana-university'
+    kaggle_dataset_name: str = 'chest-xrays-indiana-university',
+    kaggle_repo_name: str = 'MCIM_Final_Project'
 ) -> Dict[str, Path]:
     """
     Get data paths based on execution environment (Kaggle vs. Local).
@@ -22,6 +23,7 @@ def get_data_paths(
         preprocessing_variant: Name of preprocessing variant (e.g., 'first_frontal_impression')
         project_root: Project root directory (required for local execution, ignored on Kaggle)
         kaggle_dataset_name: Name of Kaggle dataset (default: 'chest-xrays-indiana-university')
+        kaggle_repo_name: Name of the cloned repository folder
     
     Returns:
         Dict[str, Path]: Dictionary containing:
@@ -36,12 +38,16 @@ def get_data_paths(
             - reports_csv: Path to indiana_reports.csv (raw data)
     """
     if is_kaggle():
-        # Kaggle environment - data is pre-loaded
+        # Kaggle environment
+        # Images are in the linked dataset at /kaggle/input
         data_root = Path('/kaggle/input') / kaggle_dataset_name
         images_dir = data_root / 'images' / 'images_normalized'
-        processed_dir = data_root / 'processed' / preprocessing_variant
-        projections_csv = data_root / 'indiana_projections.csv'
-        reports_csv = data_root / 'indiana_reports.csv'
+        
+        # Processed files are in the cloned repo (cloning happens in notebook)
+        repo_path = Path('/kaggle/working') / kaggle_repo_name
+        processed_dir = repo_path / 'data' / 'processed' / preprocessing_variant
+        projections_csv = repo_path / 'data' / 'indiana_projections.csv'
+        reports_csv = repo_path / 'data' / 'indiana_reports.csv'
     else:
         # Local environment - data in project's data/ folder
         if project_root is None:
