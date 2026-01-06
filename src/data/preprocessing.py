@@ -52,6 +52,55 @@ def apply_first_frontal_strategy(
     return first_frontal_df
 
 
+def apply_pairs_strategy(
+    merged_df: pd.DataFrame
+) -> pd.DataFrame:
+    """
+    Keep both frontal and lateral images per patient (pairs).
+    
+    For patients with both projections, keep both.
+    For patients with only one projection, keep that one.
+    
+    Args:
+        merged_df: DataFrame with merged projections and reports
+        
+    Returns:
+        Filtered DataFrame with image pairs per patient
+    """
+    # Sort by uid and projection for consistent ordering (Frontal first, then Lateral)
+    sorted_df = merged_df.sort_values(['uid', 'projection']).copy()
+    
+    # For each patient, keep up to 2 images (frontal + lateral)
+    pairs_df = sorted_df.groupby('uid').head(2).reset_index(drop=True)
+    
+    return pairs_df
+
+
+def apply_pairs_strategy(
+    merged_df: pd.DataFrame
+) -> pd.DataFrame:
+    """
+    Keep both frontal and lateral images per patient (pairs).
+    
+    For patients with both projections, keep both.
+    For patients with only one projection, keep that one.
+    
+    Args:
+        merged_df: DataFrame with merged projections and reports
+        
+    Returns:
+        Filtered DataFrame with image pairs per patient
+    """
+    # Sort by uid and projection for consistent ordering
+    sorted_df = merged_df.sort_values(['uid', 'projection']).copy()
+    
+    # For each patient, keep both frontal and lateral if available
+    # Group by patient and keep all rows (up to 2: frontal + lateral)
+    pairs_df = sorted_df.groupby('uid').head(2).reset_index(drop=True)
+    
+    return pairs_df
+
+
 def split_data_by_patient(
     df: pd.DataFrame,
     train_ratio: float = 0.80,
@@ -118,6 +167,13 @@ def preprocess_dataset(
     Returns:
         Dictionary with preprocessing statistics
     """
+    # Ensure paths are Path objects (handles both Path and str inputs)
+    from pathlib import Path as PathType
+    config_path = PathType(config_path)
+    output_dir = PathType(output_dir)
+    # Ensure paths are Path objects
+    config_path = Path(config_path)
+    output_dir = Path(output_dir)
     # Load configuration
     with open(config_path, 'r') as f:
         config = yaml.safe_load(f)
@@ -138,9 +194,12 @@ def preprocess_dataset(
     print(f"\n[2/7] Applying projection strategy: {config['projection_strategy']}")
     if config['projection_strategy'] == 'first_frontal':
         processed_df = apply_first_frontal_strategy(merged_df)
+        print(f"  ✓ Selected {len(processed_df)} images (one per patient)")
+    elif config['projection_strategy'] == 'pairs':
+        processed_df = apply_pairs_strategy(merged_df)
+        print(f"  ✓ Selected {len(processed_df)} images (up to 2 per patient)")
     else:
         raise NotImplementedError(f"Strategy '{config['projection_strategy']}' not implemented yet")
-    print(f"  ✓ Selected {len(processed_df)} images (one per patient)")
     
     # Step 3: Calculate censoring ratios
     print(f"\n[3/7] Analyzing text censoring...")
@@ -209,8 +268,8 @@ def preprocess_dataset(
     print(f"\n[7/7] Saving processed data...")
     
     # Create variant-specific subdirectory
-    # Format: data/processed/{projection_strategy}_{text_source}/
-    variant_name = f"{config['projection_strategy']}_{text_source}"
+    # Format: data/processed/{projection_strategy}_{text_source}_{min_vocab_freq}/
+    variant_name = f"{config['projection_strategy']}_{text_source}_{config['min_vocab_freq']}"
     variant_dir = output_dir / variant_name
     variant_dir.mkdir(parents=True, exist_ok=True)
     

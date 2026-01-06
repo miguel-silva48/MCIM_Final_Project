@@ -160,7 +160,19 @@ paths:
   # Data paths (relative to project root)
   data_dir: "data"
   processed_dir: "data/processed"
-  preprocessing_variant: "first_frontal_impression"  # Which preprocessing variant to use
+  
+  # Preprocessing variant to use
+  # Format: {projection}_{text_source}_{min_vocab_freq}
+  # Options:
+  #   - first_frontal_impression_3
+  #   - first_frontal_impression_5
+  #   - first_frontal_findings_3
+  #   - first_frontal_findings_5
+  #   - pairs_impression_3
+  #   - pairs_impression_5
+  #   - pairs_findings_3
+  #   - pairs_findings_5
+  preprocessing_variant: "first_frontal_impression_5"
   
   # Vocabulary file (auto-constructed from preprocessing_variant)
   vocabulary_file: null  # Auto: "{processed_dir}/{preprocessing_variant}/vocabulary.txt"
