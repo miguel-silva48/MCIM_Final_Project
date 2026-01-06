@@ -1,0 +1,19 @@
+# Requirements for Kaggle (PyTorch pre-installed)
+# Don't include torch/torchvision as Kaggle provides them
+
+# Core data science
+numpy
+pandas
+pillow
+
+# Visualization
+matplotlib
+seaborn
+
+# NLP metrics
+nltk
+rouge-score
+
+# Utilities
+pyyaml
+tqdm
