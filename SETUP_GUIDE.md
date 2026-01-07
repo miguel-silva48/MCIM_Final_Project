@@ -251,77 +251,99 @@ To modify settings:
 
 ```
 MCIM_Final_Project/
-├── src/
+├── src/                            # Source code
+│   ├── __init__.py
+│   │
 │   ├── data/                       # Data loading and processing
 │   │   ├── __init__.py
-│   │   ├── data_loader.py          # CSV loading, merging
-│   │   ├── dataset.py              # PyTorch Dataset
-│   │   ├── transforms.py           # Image augmentations
-│   │   ├── vocabulary.py           # Tokenization, vocab building
-│   │   ├── text_preprocessing.py   # Text cleaning, normalization
-│   │   └── ngram_analysis.py       # N-gram extraction
+│   │   ├── collate.py              # Custom collate function for batching variable-length captions
+│   │   ├── data_loader.py          # CSV loading and merging (indiana_projections + indiana_reports)
+│   │   ├── dataset.py              # PyTorch Dataset for X-ray images and captions
+│   │   ├── ngram_analysis.py       # N-gram extraction and analysis
+│   │   ├── preprocessing.py        # Main preprocessing pipeline (filtering, splitting, vocab building)
+│   │   ├── text_preprocessing.py   # Text cleaning, normalization, and censoring detection
+│   │   ├── transforms.py           # Image augmentations (random rotations, crops, flips)
+│   │   └── vocabulary.py           # Tokenization, vocabulary building with special tokens
 │   │
 │   ├── models/                     # Model architecture
 │   │   ├── __init__.py
-│   │   ├── encoder.py              # DenseNet-121 encoder
-│   │   ├── decoder.py              # LSTM decoder
-│   │   ├── attention.py            # Bahdanau attention
-│   │   └── caption_model.py        # Complete encoder-decoder
+│   │   ├── attention.py            # Bahdanau additive attention mechanism
+│   │   ├── caption_model.py        # Complete encoder-decoder model with attention
+│   │   ├── decoder.py              # LSTM decoder with attention
+│   │   └── encoder.py              # DenseNet-121 CNN encoder (pretrained on ImageNet)
 │   │
 │   ├── training/                   # Training infrastructure
 │   │   ├── __init__.py
-│   │   ├── loss.py                 # Loss functions
-│   │   ├── metrics.py              # BLEU, METEOR, ROUGE
-│   │   └── trainer.py              # Training loop
+│   │   ├── loss.py                 # Cross-entropy loss with padding ignore
+│   │   ├── metrics.py              # BLEU, METEOR, ROUGE-L metrics computation
+│   │   └── trainer.py              # Training loop with validation, early stopping, checkpointing
 │   │
 │   ├── utils/                      # Utilities
 │   │   ├── __init__.py
-│   │   ├── environment.py          # Kaggle/Local detection
-│   │   ├── data_paths.py           # Path management
-│   │   ├── device_check.py         # GPU detection
-│   │   ├── checkpoint.py           # Model checkpointing
-│   │   └── logging_utils.py        # Logging, manifests
+│   │   ├── checkpoint.py           # Model checkpointing and loading (PyTorch 2.6+ compatible)
+│   │   ├── config_loader.py        # YAML configuration loader with type conversion
+│   │   ├── data_paths.py           # Environment-aware path management (Kaggle vs Local)
+│   │   ├── device_check.py         # GPU detection and device selection (CUDA/MPS/CPU)
+│   │   ├── environment.py          # Kaggle/Local/Colab environment detection
+│   │   └── logging_utils.py        # Logging utilities and manifest generation
 │   │
 │   └── visualization/              # Plotting functions
 │       ├── __init__.py
-│       └── eda_plots.py            # EDA visualizations
+│       ├── eda_plots.py            # EDA visualizations (distributions, word clouds, projections)
+│       └── training_viz.py         # Training visualizations (loss curves, attention maps)
+│
+├── scripts/                        # Utility scripts
+│   └── preprocess_all_variants.py  # Batch preprocessing for all 8 variant combinations
 │
 ├── configs/                        # Configuration files
-│   ├── data_config.yaml            # Data processing config
-│   └── model_config.yaml           # Model & training config
+│   ├── data_config.yaml            # Data processing config (projection, text_source, vocab)
+│   └── model_config.yaml           # Model & training config (architecture, hyperparameters)
 │
 ├── notebooks/                      # Jupyter notebooks
 │   ├── 01_eda.ipynb                # Exploratory data analysis
-│   ├── 02_preprocessing.ipynb      # Data preprocessing
-│   └── 03_training.ipynb           # Model training
+│   ├── 02_preprocessing.ipynb      # Data preprocessing walkthrough
+│   ├── 03_training.ipynb           # Main training notebook (first_frontal + min_freq=5)
+│   ├── 03_training_frontal3.ipynb  # Training with first_frontal + min_freq=3
+│   ├── 03_training_pairs3.ipynb    # Training with pairs strategy + min_freq=3
+│   └── 03_training_pairs5.ipynb    # Training with pairs strategy + min_freq=5
 │
-├── data/                           # Dataset (not in git)
+├── data/                           # Dataset (images not in github)
 │   ├── indiana_projections.csv     # Image metadata
 │   ├── indiana_reports.csv         # Medical reports
 │   ├── images/
-│   │   └── images_normalized/      # 7,466 X-ray images
-│   └── processed/                  # Generated files
-│       └── first_frontal_impression/
-│           ├── train.csv           # Training split (2,948)
-│           ├── val.csv             # Validation split (368)
-│           ├── test.csv            # Test split (368)
-│           ├── vocabulary.txt      # 514 tokens
-│           └── preprocessing_manifest.json
+│   │   └── images_normalized/      # 7,466 X-ray images (PNG format)
+│   └── processed/                  # Generated preprocessing outputs
+│       ├── first_frontal_impression_3/   # variant folder
+│       ├── first_frontal_impression_5/   # variant folder
+│       ├── first_frontal_findings_3/     # variant folder
+│       ├── first_frontal_findings_5/     # variant folder
+│       ├── pairs_impression_3/           # variant folder
+│       ├── pairs_impression_5/           # variant folder
+│       ├── pairs_findings_3/             # variant folder
+│       └── pairs_findings_5/             # variant folder
+│           ├── train.csv                 # Training split with image paths and captions
+│           ├── val.csv                   # Validation split
+│           ├── test.csv                  # Test split
+│           ├── vocabulary.txt            # Vocabulary tokens (one per line)
+│           └── preprocessing_manifest.json  # Metadata about preprocessing run
 │
 ├── outputs/                        # Training outputs (not in git)
 │   └── training_runs/
 │       └── {variant}_{timestamp}/
-│           ├── training_manifest.json
-│           ├── metrics.csv
-│           ├── sample_outputs/
-│           └── checkpoints/
+│           ├── training_manifest.json    # Training configuration and results
+│           ├── metrics.csv               # Epoch-by-epoch metrics
+│           ├── sample_outputs/           # Sample generated captions during training
+│           └── checkpoints/              # Model checkpoints (.pth files)
 │
-├── setup_pytorch.sh                # PyTorch installer script
-├── requirements_eda.txt            # EDA dependencies
-├── test_data_pipeline.py           # Test suite
-├── README.md                       # Main documentation
-├── SETUP_GUIDE.md                  # This file
-└── PROJECT_STATUS.md               # Development tracking
+├── docs/                           # Documentation (empty or archived)
+│
+├── .gitignore                      # Git ignore rules
+├── LICENSE                         # MIT License
+├── README.md                       # Main project documentation
+├── SETUP_GUIDE.md                  # This file - complete installation guide
+├── setup_pytorch.sh                # Interactive PyTorch installer script
+├── requirements_eda.txt            # EDA-only dependencies (pandas, matplotlib, seaborn, etc.)
+└── requirements_kaggle.txt         # Kaggle-compatible dependencies (excludes pre-installed packages)
 ```
 
 ---
@@ -345,22 +367,48 @@ data/
 
 ### Download Dataset
 
-1. **From Kaggle** (recommended):
+#### Local Environment
+
+**Option 1: Kaggle CLI** (recommended)
+```bash
+# Install Kaggle CLI if not already installed
+pip install kaggle
+
+# Download dataset (downloads as archive.zip)
+kaggle datasets download -d raddar/chest-xrays-indiana-university
+
+# Extract to data/ directory
+unzip archive.zip -d data/
+```
+
+**Option 2: Manual Download**
+1. Visit https://www.kaggle.com/datasets/raddar/chest-xrays-indiana-university
+2. Click "Download" (downloads as `archive.zip`)
+3. Extract to project's `data/` directory:
    ```bash
-   # Install Kaggle CLI
-   pip install kaggle
-   
-   # Download dataset
-   kaggle datasets download -d raddar/chest-xrays-indiana-university
-   
-   # Extract to data/
-   unzip chest-xrays-indiana-university.zip -d data/
+   unzip ~/Downloads/archive.zip -d data/
    ```
 
-2. **Manual Download**:
-   - Visit https://www.kaggle.com/datasets/raddar/chest-xrays-indiana-university
-   - Download ZIP
-   - Extract to `data/` directory
+**Option 3: KaggleHub** (requires API authentication)
+```python
+import kagglehub
+
+# Download latest version
+path = kagglehub.dataset_download("raddar/chest-xrays-indiana-university")
+print("Path to dataset files:", path)
+```
+
+#### Kaggle Notebook Environment
+
+In Kaggle notebooks, **do not download** - instead link the dataset:
+
+1. Open your Kaggle notebook
+2. Click "+ Add Data" in the right sidebar
+3. Search for "chest-xrays-indiana-university"
+4. Click "Add" to link the dataset
+5. Dataset will be available at: `/kaggle/input/chest-xrays-indiana-university/`
+
+The training notebook (`03_training.ipynb`) automatically handles Kaggle paths.
 
 ### Preprocessing
 
@@ -544,36 +592,6 @@ python3 -m src.utils.device_check
 python3 -c "from src.data.data_loader import load_data; df = load_data(); print(f'Loaded {len(df)} samples')"
 ```
 
-### Full Test Suite
-
-```bash
-# Test all components
-python3 test_data_pipeline.py
-
-# Test individual modules
-python3 -m src.data.vocabulary
-python3 -m src.data.transforms
-python3 -m src.data.dataset
-python3 -m src.models.encoder
-python3 -m src.models.attention
-python3 -m src.models.decoder
-python3 -m src.models.caption_model
-python3 -m src.training.loss
-python3 -m src.training.metrics
-python3 -m src.utils.checkpoint
-python3 -m src.utils.logging_utils
-```
-
-### Expected Output
-
-All tests should pass with:
-- ✅ Module imports successful
-- ✅ Configuration loaded
-- ✅ Dataset found (7,466 images)
-- ✅ Vocabulary built (514 tokens)
-- ✅ Model initialized (23.2M params)
-- ✅ Metrics calculated correctly
-
 ---
 
 ## Development Workflow
@@ -610,18 +628,16 @@ All tests should pass with:
 3. **Clone repo in notebook**
    ```python
    !git clone https://github.com/miguel-silva48/MCIM_Final_Project.git
-   %cd MCIM_Final_Project
+   %cd MCIM_Final_Project/notebooks
    ```
 
 4. **Install dependencies**
    ```python
-   !pip install nltk rouge-score scikit-learn
+   !pip install -r kaggle_requirements.txt
    ```
 
 5. **Run training**
-   ```python
-   # Training code here
-   ```
+  > Start running the cells—you're ready to train!
 
 ---
 
@@ -636,16 +652,3 @@ All tests should pass with:
 - [Show, Attend and Tell](https://arxiv.org/abs/1502.03044) - Attention mechanism
 - [Neural Machine Translation](https://arxiv.org/abs/1409.0473) - Bahdanau attention
 - [DenseNet](https://arxiv.org/abs/1608.06993) - Encoder architecture
-
-### Tools
-- [Weights & Biases](https://wandb.ai/) - Experiment tracking (optional)
-- [TensorBoard](https://www.tensorflow.org/tensorboard) - Visualization (optional)
-
----
-
-## Getting Help
-
-1. **Check this guide** for common issues
-2. **Review PROJECT_STATUS.md** for known issues
-3. **Open GitHub issue** for bugs
-4. **Contact team** for project-specific questions

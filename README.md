@@ -2,7 +2,7 @@
 
 Automated chest X-ray captioning system combining DenseNet-121 encoder with LSTM decoder and attention mechanism. Generates radiological impressions from X-ray images.
 
-**Dataset**: Indiana University Chest X-Ray Collection (~7,470 images, ~3,855 patients)  
+**Dataset**: Indiana University Chest X-Ray Collection (7,466 images, 3,851 patients)  
 **Model**: 23.2M params (16.2M trainable) | DenseNet-121 + LSTM + Bahdanau Attention  
 **Status**: Training infrastructure complete, ready for full training  
 **Team**: Maria Linhares & Miguel Silva
@@ -24,9 +24,14 @@ chmod +x setup_pytorch.sh && ./setup_pytorch.sh
 pip install -r requirements_eda.txt
 python -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab'); nltk.download('stopwords'); nltk.download('wordnet'); nltk.download('omw-1.4')"
 
-# 4. Run notebooks
+# 4. Download dataset (see SETUP_GUIDE.md for details)
+kaggle datasets download -d raddar/chest-xrays-indiana-university
+unzip archive.zip -d data/
+
+# 5. Run notebooks
 jupyter notebook notebooks/01_eda.ipynb
 jupyter notebook notebooks/02_preprocessing.ipynb
+jupyter notebook notebooks/03_training.ipynb
 ```
 
 **Having issues?** See [SETUP_GUIDE.md](SETUP_GUIDE.md) for detailed instructions and troubleshooting.
@@ -44,7 +49,7 @@ Bahdanau Attention Mechanism
     ↓
 LSTM Decoder (512 embed, 1024 hidden)
     ↓
-Output: "No acute cardiopulmonary abnormality."
+Output: Caption (e.g. "No acute cardiopulmonary abnormality.")
 ```
 
 ### Key Features
@@ -52,20 +57,6 @@ Output: "No acute cardiopulmonary abnormality."
 - ✅ **Production-Ready**: Multi-device (CUDA/ROCm/MPS/CPU), mixed precision, checkpointing, logging
 - ✅ **Comprehensive Metrics**: BLEU-1/2/3/4, METEOR, ROUGE-L
 - ✅ **Robust Testing**: Every module has standalone tests
-
----
-
-## Current Status
-
-| Component | Status | Details |
-|-----------|--------|---------|
-| Data Pipeline | ✅ Complete | Dataset, transforms, patient-level splits |
-| Model Architecture | ✅ Complete | Encoder-decoder with attention |
-| Training Infrastructure | ✅ Complete | Metrics, checkpointing, logging |
-| Training Execution | 🔄 In Progress | Testing on GTX 1650Ti, then Kaggle |
-| Evaluation | ⏳ Next | Performance analysis, visualization |
-
-**See [PROJECT_STATUS.md](PROJECT_STATUS.md) for detailed progress tracking.**
 
 ---
 
@@ -91,7 +82,7 @@ MCIM_Final_Project/
 
 - **Encoder**: DenseNet-121 (7.9M params, frozen)
 - **Decoder**: LSTM + Attention (15.2M params, trainable)
-- **Vocabulary**: 514 tokens (min_freq=5)
+- **Vocabulary**: 584 tokens (min_freq=5) or 782 tokens (min_freq=3)
 - **Training**: Adam (lr=1e-4), teacher forcing, early stopping
 - **Inference**: Beam search (beam_size=3)
 
@@ -102,10 +93,10 @@ MCIM_Final_Project/
 ## Testing
 
 ```bash
-# Test all components
-python3 test_data_pipeline.py
-
-# Test individual modules
+# Test individual modules 
+# (This applies to the vast majority of standalone python scripts)
+# (Exceptions are those that agregate functionality from other modules)
+# (Below we list only some examples; run tests for all modules as needed)
 python3 -m src.data.dataset
 python3 -m src.models.caption_model
 python3 -m src.training.metrics
@@ -113,10 +104,9 @@ python3 -m src.training.metrics
 
 ---
 
-## Documentation
+## Other Documentation
 
 - **[SETUP_GUIDE.md](SETUP_GUIDE.md)** - Detailed setup, troubleshooting, configuration
-- **[PROJECT_STATUS.md](PROJECT_STATUS.md)** - Development progress, what's next
 - **[notebooks/](notebooks/)** - Interactive Jupyter notebooks with explanations
 
 ---
